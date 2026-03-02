@@ -1,0 +1,8 @@
+mcp[cli]
+fastmcp
+pydantic
+pydantic-settings
+selenium
+webdriver-manager
+httpx
+python-dotenv
