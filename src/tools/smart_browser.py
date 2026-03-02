@@ -158,9 +158,11 @@ def _get_driver_or_fail():
     return get_driver()   # get_driver already imported at top of file
 
 def _build_accessibility_tree(driver) -> str:
-    """Run JS on the page and return the accessibility tree string."""
     log.debug("Building accessibility tree via JS injection")
     tree = driver.execute_script(_ACCESSIBILITY_TREE_JS)
+    if not tree:
+        log.warning("Accessibility tree JS returned None — page may still be loading")
+        return ""
     log.debug(f"Accessibility tree has {len(tree.splitlines())} interactive elements")
     return tree
 
@@ -171,6 +173,8 @@ def _find_best_match_index(tree: str, description: str) -> int:
     based on a natural language description.
     Returns the element index number, or -1 if not found.
     """
+    if not tree:
+        return -1
     description_lower = description.lower()
     lines = tree.strip().splitlines()
 
