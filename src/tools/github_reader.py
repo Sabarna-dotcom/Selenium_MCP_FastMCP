@@ -163,6 +163,26 @@ def _build_tree_display(tree: list[dict], extension_filter: Optional[str] = None
     return "\n".join(lines), len(folders), len(files)
 
 
+def _require_repo_config(branch: str = None) -> str | None:
+    missing = []
+    if not settings.gh_owner: missing.append("owner")
+    if not settings.gh_repo:  missing.append("repo")
+    if branch is not None and not branch: missing.append("branch")
+
+    if not missing:
+        return None
+
+    lines = [f"⚠️ Missing: {', '.join(missing)}. Please provide:"]
+    if "owner" in missing:
+        lines.append("   • owner: GitHub username or org (e.g. Sabarna-dotcom)")
+    if "repo" in missing:
+        lines.append("   • repo: repository name (e.g. Python_Selenium_Web_Automation_PyTest)")
+    if "branch" in missing:
+        lines.append("   • branch: branch name (e.g. main, develop)")
+    lines.append("\n💡 Call switch_repo(owner='...', repo='...', branch='...') to set these.")
+    return "\n".join(lines)
+
+
 # ── Tools ─────────────────────────────────────────────────────────────────
 
 @handle_exceptions
@@ -179,6 +199,9 @@ def explore_repo(input: ExploreRepoInput) -> str:
     mode: structure_only | with_content
     extension_filter: only show/read files with this extension (e.g. .py, .java)
     """
+    msg = _require_repo_config(input.branch)
+    if msg: return msg
+
     log.info(f"Exploring repo | branch={input.branch} | mode={input.mode} | filter={input.extension_filter}")
 
     tree = _get_tree(input.branch)
@@ -244,6 +267,9 @@ def read_codebase(input: ReadCodebaseInput) -> str:
     extension_filter: only read files with this extension (.py, .java, .ts etc.)
     folder_filter: only read files inside this folder
     """
+    msg = _require_repo_config(input.branch)
+    if msg: return msg
+
     log.info(f"Reading codebase | branch={input.branch} | mode={input.mode} | query='{input.query}'")
 
     tree = _get_tree(input.branch)
@@ -337,6 +363,9 @@ def search_files(input: SearchFilesInput) -> str:
     extension: optional filter e.g. '.py', '.java'
     branch: branch to search in
     """
+    msg = _require_repo_config(input.branch)
+    if msg: return msg
+
     log.info(f"Searching files | keyword='{input.keyword}' | branch={input.branch} | ext={input.extension}")
     tree = _get_tree(input.branch)
 

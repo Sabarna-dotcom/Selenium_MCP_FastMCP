@@ -5,7 +5,7 @@ Repo-agnostic — works with any language or folder structure.
 
 from typing import Optional, Literal
 from pydantic import BaseModel, Field
-from config.settings import settings
+from src.config.settings import settings
 
 
 class ExploreRepoInput(BaseModel):
@@ -35,7 +35,7 @@ class ReadCodebaseInput(BaseModel):
         "read_relevant",
         description=(
             "read_all → read every file in the repo (comprehensive but slow for large repos). "
-            "read_relevant → provide a query and Claude finds the most relevant files to read."
+            "read_relevant → provide a query and llm finds the most relevant files to read."
         )
     )
     query: Optional[str] = Field(
