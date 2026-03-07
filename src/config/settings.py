@@ -22,6 +22,16 @@ class Settings(BaseSettings):
     default_headless: bool = Field(False, description="Run browser headless by default")
     default_timeout: int = Field(30, description="Default WebDriverWait timeout in seconds")
 
+    # ── Environment Auth ─────────────────────────────────────────
+    qa_user: str = Field("", description="QA basic auth username")
+    qa_pass: str = Field("", description="QA basic auth password")
+
+    uat_user: str = Field("", description="UAT basic auth username")
+    uat_pass: str = Field("", description="UAT basic auth password")
+
+    ppe_user: str = Field("", description="PPE basic auth username")
+    ppe_pass: str = Field("", description="PPE basic auth password")
+
 
     class Config:
         env_file = ".env"

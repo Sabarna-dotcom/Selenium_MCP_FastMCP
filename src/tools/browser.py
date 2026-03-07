@@ -22,6 +22,8 @@ from src.models.browser_models import (
     ScrollInput, WaitForInput, ExecuteScriptInput
 )
 
+from src.config.settings import settings
+
 log = get_logger("tools.browser")
 
 BY_MAP = {
@@ -64,6 +66,39 @@ def _wait_for_element(driver, selector: str, by: str, timeout: int, condition="c
             f"Element not found: [{by}] '{selector}' within {timeout}s"
         )
 
+def _inject_auth_if_needed(url: str) -> str:
+    """
+    Detect environment from URL and inject basic auth credentials.
+    Checks if 'qa', 'uat', or 'ppe' appears in the URL hostname.
+    Returns URL unchanged if no match or credentials not configured.
+    """
+    from urllib.parse import urlparse, urlunparse
+
+    parsed = urlparse(url)
+    hostname = parsed.netloc.lower()
+
+    # Detect env and get credentials
+    if "qa" in hostname:
+        user, pwd = settings.qa_user, settings.qa_pass
+        env = "QA"
+    elif "uat" in hostname:
+        user, pwd = settings.uat_user, settings.uat_pass
+        env = "UAT"
+    elif "ppe" in hostname:
+        user, pwd = settings.ppe_user, settings.ppe_pass
+        env = "PPE"
+    else:
+        return url  # prod or unknown — no auth needed
+
+    if not user or not pwd:
+        log.warning(f"{env} detected in URL but credentials not set in .env")
+        return url  # navigate without auth — let it fail naturally
+
+    # Inject credentials into URL
+    auth_netloc = f"{user}:{pwd}@{parsed.netloc}"
+    auth_url = str(urlunparse(parsed._replace(netloc=auth_netloc)))
+    log.info(f"{env} environment detected — auth injected")
+    return auth_url
 
 # ── Tools ─────────────────────────────────────────────────────────────────
 
@@ -92,8 +127,11 @@ def browser_navigate(input: NavigateInput) -> str:
     wait_until: load | domcontentloaded | none
     """
     driver = _get_or_start_driver()
+
+    url = _inject_auth_if_needed(input.url)
+
     log.info(f"Navigating to: {input.url}")
-    driver.get(input.url)
+    driver.get(url)
     log.info(f"Page loaded: {driver.title}")
     return f"✅ Navigated to: {input.url} | Title: {driver.title} | URL: {driver.current_url}"
 
